@@ -80,3 +80,75 @@ export interface StreakApiResponse {
   longestCount: number;
   lastUpdated: string;
 }
+
+// Chat API types
+export interface ChatMessageApiResponse {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface SendChatMessageDto {
+  message: string;
+}
+
+export interface ChatConversation {
+  conversationId: number;
+  messages: ChatMessageApiResponse[];
+}
+
+// Group/Split API types
+export interface GroupMember {
+  memberId: number;
+  name: string;
+  userId: number | null;
+}
+
+export interface GroupApiResponse {
+  groupId: number;
+  name: string;
+  description: string;
+  memberCount?: number;
+  members?: GroupMember[];
+  createdAt: string;
+}
+
+export interface CreateGroupDto {
+  name: string;
+  description: string;
+  members: Array<{
+    userId: number | null;
+    name: string;
+  }>;
+}
+
+export interface GroupBalanceApiResponse {
+  memberId: number;
+  memberName: string;
+  totalPaid: number;
+  totalShare: number;
+  balance: number;
+}
+
+export interface SettlementApiResponse {
+  fromMember: string;
+  toMember: string;
+  amount: number;
+}
+
+export interface GroupTransactionApiResponse {
+  transactionId: number;
+  description: string;
+  amount: number;
+  paidByMemberName: string;
+  paidByMemberId: number;
+  participantNames: string[];
+  transactionDate: string;
+}
+
+export interface CreateGroupTransactionDto {
+  description: string;
+  amount: number;
+  paidByMemberId: number;
+  includedMemberIds: number[];
+}

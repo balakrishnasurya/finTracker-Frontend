@@ -41,7 +41,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             <Text
               style={[styles.type, { color: isDark ? "#9CA3AF" : "#6B7280" }]}
             >
-              {category.type === "income" ? "💰 Income" : "💸 Expense"}
+              💸 Expense
             </Text>
           </View>
           <View style={styles.badge}>

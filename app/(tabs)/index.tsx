@@ -4,15 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useSpendingAlert } from "@/hooks/use-spending-alert";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 export default function HomeScreen() {
@@ -23,18 +23,109 @@ export default function HomeScreen() {
   const summary = getFinanceSummary();
   const [refreshing, setRefreshing] = useState(false);
 
+  // Spending alert monitoring
+  const { monthlyTotal, alertSettings, isAlertTriggered, reloadSettings } =
+    useSpendingAlert();
+  const [showAlertBanner, setShowAlertBanner] = useState(false);
+
+  // Show alert banner when alert is triggered
+  useEffect(() => {
+    if (isAlertTriggered && alertSettings?.enabled) {
+      setShowAlertBanner(true);
+      // Auto-hide after 5 seconds
+      const timer = setTimeout(() => {
+        setShowAlertBanner(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAlertTriggered, alertSettings]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
       await refreshData();
+      await reloadSettings();
     } finally {
       setRefreshing(false);
     }
   };
 
-  const recentTransactions = transactions
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
+  // Get current month spending from actual transaction data
+  const getCurrentMonthSpending = () => {
+    if (!transactions || transactions.length === 0) {
+      return 0;
+    }
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const monthExpenses = transactions
+      .filter((t) => {
+        ///if (t.type !== "expense") return false;
+
+        try {
+          // Parse the transaction date
+          const transactionDate = new Date(t.date);
+
+          // Check if date is valid
+          if (isNaN(transactionDate.getTime())) {
+            console.warn(`Invalid date for transaction ${t.id}: ${t.date}`);
+            return false;
+          }
+
+          return (
+            transactionDate.getMonth() === currentMonth &&
+            transactionDate.getFullYear() === currentYear
+          );
+        } catch (error) {
+          console.error(`Error parsing date for transaction ${t.id}:`, error);
+          return false;
+        }
+      })
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return monthExpenses;
+  };
+
+  // Get last month spending
+  const getLastMonthSpending = () => {
+    if (!transactions || transactions.length === 0) {
+      return 0;
+    }
+
+    const now = new Date();
+    let lastMonth = now.getMonth() - 1;
+    let lastMonthYear = now.getFullYear();
+
+    if (lastMonth < 0) {
+      lastMonth = 11;
+      lastMonthYear -= 1;
+    }
+
+    const lastMonthExpenses = transactions
+      .filter((t) => {
+        try {
+          const transactionDate = new Date(t.date);
+          if (isNaN(transactionDate.getTime())) return false;
+
+          return (
+            transactionDate.getMonth() === lastMonth &&
+            transactionDate.getFullYear() === lastMonthYear
+          );
+        } catch (error) {
+          return false;
+        }
+      })
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+    return lastMonthExpenses;
+  };
+
+  // Sort all transactions by date (most recent first)
+  const sortedTransactions = [...transactions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
 
   const getCategory = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId);
@@ -46,6 +137,11 @@ export default function HomeScreen() {
       currency: "INR",
     }).format(amount);
   };
+
+  const monthSpending = getCurrentMonthSpending();
+  const lastMonthSpending = getLastMonthSpending();
+  // Prediction: Last month + 5% variation (simulating a small increase)
+  const predictedNextMonthSpending = lastMonthSpending * 1.05;
 
   return (
     <View
@@ -100,30 +196,85 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Alert Banner */}
+        {showAlertBanner && alertSettings && (
+          <Card
+            style={[
+              styles.alertBanner,
+              {
+                backgroundColor: isDark ? "#7C2D12" : "#FEF3C7",
+                borderColor: "#F59E0B",
+              },
+            ]}
+          >
+            <View style={styles.alertBannerContent}>
+              <Text style={styles.alertBannerIcon}>📧</Text>
+              <View style={styles.alertBannerText}>
+                <Text
+                  style={[
+                    styles.alertBannerTitle,
+                    { color: isDark ? "#FCD34D" : "#92400E" },
+                  ]}
+                >
+                  Spending Alert Sent!
+                </Text>
+                <Text
+                  style={[
+                    styles.alertBannerMessage,
+                    { color: isDark ? "#FDE68A" : "#78350F" },
+                  ]}
+                >
+                  Your monthly expenses reached ₹
+                  {alertSettings.monthlyLimit.toLocaleString("en-IN")}. Email
+                  sent to {alertSettings.email}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        )}
+
         <Card style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Total Balance</Text>
+          <Text style={styles.balanceLabel}>Total Spending This Month</Text>
           <Text
             style={[
               styles.balanceAmount,
               {
-                color: summary.balance >= 0 ? "#10B981" : "#EF4444",
+                color: "#EF4444",
               },
             ]}
           >
-            {formatCurrency(summary.balance)}
+            {formatCurrency(monthSpending)}
           </Text>
-          <View style={styles.balanceRow}>
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceItemLabel}>Income</Text>
-              <Text style={[styles.balanceItemValue, { color: "#10B981" }]}>
-                {formatCurrency(summary.totalIncome)}
+        </Card>
+
+        <Card style={styles.predictionCard}>
+          <View style={styles.predictionRow}>
+            <View style={styles.predictionItem}>
+              <Text style={styles.predictionLabel}>Last Month</Text>
+              <Text
+                style={[
+                  styles.predictionValue,
+                  { color: isDark ? "#D1D5DB" : "#4B5563" },
+                ]}
+              >
+                {formatCurrency(lastMonthSpending)}
               </Text>
             </View>
-            <View style={styles.balanceDivider} />
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceItemLabel}>Expense</Text>
-              <Text style={[styles.balanceItemValue, { color: "#EF4444" }]}>
-                {formatCurrency(summary.totalExpense)}
+            <View
+              style={[
+                styles.predictionDivider,
+                { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+              ]}
+            />
+            <View style={styles.predictionItem}>
+              <Text style={styles.predictionLabel}>Next Month (Est.)</Text>
+              <Text
+                style={[
+                  styles.predictionValue,
+                  { color: isDark ? "#D1D5DB" : "#4B5563" },
+                ]}
+              >
+                {formatCurrency(predictedNextMonthSpending)}
               </Text>
             </View>
           </View>
@@ -152,16 +303,18 @@ export default function HomeScreen() {
                 { color: isDark ? "#F9FAFB" : "#111827" },
               ]}
             >
-              Recent Transactions
+              All Transactions
             </Text>
-            <TouchableOpacity onPress={() => router.push("/transactions")}>
-              <Text style={{ color: "#10B981", fontWeight: "600" }}>
-                See All
+            {sortedTransactions.length > 0 && (
+              <Text
+                style={{ color: isDark ? "#9CA3AF" : "#6B7280", fontSize: 14 }}
+              >
+                {sortedTransactions.length} total
               </Text>
-            </TouchableOpacity>
+            )}
           </View>
 
-          {recentTransactions.length === 0 ? (
+          {sortedTransactions.length === 0 ? (
             <Card>
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>💰</Text>
@@ -184,7 +337,7 @@ export default function HomeScreen() {
               </View>
             </Card>
           ) : (
-            recentTransactions.map((transaction) => (
+            sortedTransactions.map((transaction) => (
               <TransactionCard
                 key={transaction.id}
                 transaction={transaction}
@@ -302,10 +455,10 @@ const styles = StyleSheet.create({
   balanceRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     width: "100%",
   },
   balanceItem: {
-    flex: 1,
     alignItems: "center",
   },
   balanceItemLabel: {
@@ -316,11 +469,6 @@ const styles = StyleSheet.create({
   balanceItemValue: {
     fontSize: 18,
     fontWeight: "600",
-  },
-  balanceDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#E5E7EB",
   },
   quickActions: {
     flexDirection: "row",
@@ -360,5 +508,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginBottom: 16,
+  },
+  predictionCard: {
+    marginBottom: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  predictionRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  predictionItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  predictionLabel: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  predictionValue: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  predictionDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#E5E7EB",
+  },
+  alertBanner: {
+    marginBottom: 20,
+    borderWidth: 2,
+    paddingVertical: 12,
+  },
+  alertBannerContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  alertBannerIcon: {
+    fontSize: 24,
+    marginTop: 2,
+  },
+  alertBannerText: {
+    flex: 1,
+  },
+  alertBannerTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  alertBannerMessage: {
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

@@ -3,47 +3,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { Category, TransactionType } from "@/types";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    Animated,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-
-// Hardcoded income categories
-const INCOME_CATEGORIES: Category[] = [
-  {
-    id: "18",
-    name: "Others",
-    icon: "📦",
-    color: "#6B7280",
-    type: "income",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "19",
-    name: "Salary",
-    icon: "💰",
-    color: "#10B981",
-    type: "income",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "20",
-    name: "Pocket Money",
-    icon: "💵",
-    color: "#3B82F6",
-    type: "income",
-    createdAt: new Date().toISOString(),
-  },
-];
 
 export default function NewTransactionScreen() {
   const { addTransaction, categories } = useFinance();
@@ -53,18 +24,14 @@ export default function NewTransactionScreen() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [type, setType] = useState<TransactionType>("expense");
   const [paymentType, setPaymentType] = useState("Upi");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successAnimation] = useState(new Animated.Value(0));
 
-  // Use hardcoded income categories or filter expense categories from backend
-  const availableCategories =
-    type === "income"
-      ? INCOME_CATEGORIES
-      : categories.filter((c) => c.type === type);
+  // Filter only expense categories
+  const availableCategories = categories.filter((c) => c.type === "expense");
 
   const handleSubmit = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -87,7 +54,7 @@ export default function NewTransactionScreen() {
         description:
           description.trim() || selectedCategory?.name || "Transaction",
         categoryId: selectedCategoryId,
-        type,
+        type: "expense",
         date,
         paymentType,
       });
@@ -131,73 +98,6 @@ export default function NewTransactionScreen() {
         </View>
 
         <Card style={styles.section}>
-          <Text
-            style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
-          >
-            Type
-          </Text>
-          <View style={styles.typeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === "expense" && styles.typeButtonActive,
-                { borderColor: isDark ? "#4B5563" : "#D1D5DB" },
-              ]}
-              onPress={() => {
-                setType("expense");
-                setSelectedCategoryId("");
-              }}
-            >
-              <Text
-                style={[
-                  styles.typeIcon,
-                  type === "expense" && styles.typeIconActive,
-                ]}
-              >
-                💸
-              </Text>
-              <Text
-                style={[
-                  styles.typeText,
-                  { color: isDark ? "#E5E7EB" : "#374151" },
-                  type === "expense" && styles.typeTextActive,
-                ]}
-              >
-                Expense
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === "income" && styles.typeButtonActive,
-                { borderColor: isDark ? "#4B5563" : "#D1D5DB" },
-              ]}
-              onPress={() => {
-                setType("income");
-                setSelectedCategoryId("");
-              }}
-            >
-              <Text
-                style={[
-                  styles.typeIcon,
-                  type === "income" && styles.typeIconActive,
-                ]}
-              >
-                💰
-              </Text>
-              <Text
-                style={[
-                  styles.typeText,
-                  { color: isDark ? "#E5E7EB" : "#374151" },
-                  type === "income" && styles.typeTextActive,
-                ]}
-              >
-                Income
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           <Text
             style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
           >
@@ -275,7 +175,7 @@ export default function NewTransactionScreen() {
                   { color: isDark ? "#9CA3AF" : "#6B7280" },
                 ]}
               >
-                No {type} categories available
+                No expense categories available
               </Text>
               <Button
                 title="Create Category"
@@ -395,7 +295,7 @@ export default function NewTransactionScreen() {
                 { color: isDark ? "#9CA3AF" : "#6B7280" },
               ]}
             >
-              Your {type} of ₹{amount} has been recorded successfully
+              Your expense of ₹{amount} has been recorded successfully
             </Text>
           </Animated.View>
         </View>

@@ -8,7 +8,7 @@ export const ENV = {
   // API Base URL
   API_BASE_URL:
     process.env.EXPO_PUBLIC_API_URL ||
-    "https://plankton-app-v4el9.ondigitalocean.app/api/v1",
+    "https://seal-app-wqxuo.ondigitalocean.app/api/v1",
 
   // API Timeout (milliseconds)
   API_TIMEOUT: parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT || "10000", 10),

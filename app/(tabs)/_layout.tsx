@@ -32,9 +32,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Stats",
+          title: "Chat",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="chart.bar.fill" color={color} />
+            <IconSymbol size={28} name="message.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="split"
+        options={{
+          title: "Split",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="call.split" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gearshape.fill" color={color} />
           ),
         }}
       />

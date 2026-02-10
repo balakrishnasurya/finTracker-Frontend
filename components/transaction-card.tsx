@@ -66,12 +66,11 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             style={[
               styles.amount,
               {
-                color: transaction.type === "income" ? "#10B981" : "#EF4444",
+                color: "#EF4444",
               },
             ]}
           >
-            {transaction.type === "income" ? "+" : "-"}
-            {formattedAmount}
+            -{formattedAmount}
           </Text>
         </View>
       </Card>

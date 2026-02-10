@@ -4,32 +4,26 @@ import { Card } from "@/components/ui/card";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  View
 } from "react-native";
 
 export default function TransactionsScreen() {
   const { transactions, categories } = useFinance();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
 
-  const filteredTransactions = transactions
-    .filter((t) => filter === "all" || t.type === filter)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedTransactions = transactions.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
 
   const getCategory = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId);
   };
-
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
 
   const totalExpense = transactions
     .filter((t) => t.type === "expense")
@@ -49,14 +43,7 @@ export default function TransactionsScreen() {
         <Card style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Income</Text>
-              <Text style={[styles.summaryValue, { color: "#10B981" }]}>
-                ₹{totalIncome.toFixed(2)}
-              </Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>Expense</Text>
+              <Text style={styles.summaryLabel}>Total Expense</Text>
               <Text style={[styles.summaryValue, { color: "#EF4444" }]}>
                 ₹{totalExpense.toFixed(2)}
               </Text>
@@ -65,65 +52,8 @@ export default function TransactionsScreen() {
         </Card>
       </View>
 
-      <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "all" && styles.filterButtonActive,
-            { backgroundColor: isDark ? "#374151" : "#FFFFFF" },
-          ]}
-          onPress={() => setFilter("all")}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              { color: isDark ? "#E5E7EB" : "#374151" },
-              filter === "all" && styles.filterTextActive,
-            ]}
-          >
-            All
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "income" && styles.filterButtonActive,
-            { backgroundColor: isDark ? "#374151" : "#FFFFFF" },
-          ]}
-          onPress={() => setFilter("income")}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              { color: isDark ? "#E5E7EB" : "#374151" },
-              filter === "income" && styles.filterTextActive,
-            ]}
-          >
-            Income
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filter === "expense" && styles.filterButtonActive,
-            { backgroundColor: isDark ? "#374151" : "#FFFFFF" },
-          ]}
-          onPress={() => setFilter("expense")}
-        >
-          <Text
-            style={[
-              styles.filterText,
-              { color: isDark ? "#E5E7EB" : "#374151" },
-              filter === "expense" && styles.filterTextActive,
-            ]}
-          >
-            Expense
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       <FlatList
-        data={filteredTransactions}
+        data={sortedTransactions}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TransactionCard
@@ -186,9 +116,9 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   summaryItem: {
-    flex: 1,
     alignItems: "center",
   },
   summaryLabel: {
@@ -199,33 +129,6 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 20,
     fontWeight: "700",
-  },
-  summaryDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#E5E7EB",
-  },
-  filterContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    gap: 8,
-    marginBottom: 12,
-  },
-  filterButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  filterButtonActive: {
-    backgroundColor: "#10B981",
-  },
-  filterText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  filterTextActive: {
-    color: "#FFFFFF",
   },
   list: {
     padding: 20,

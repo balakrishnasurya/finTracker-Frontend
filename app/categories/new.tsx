@@ -3,16 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { TransactionType } from "@/types";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const CATEGORY_ICONS = [
@@ -48,7 +47,6 @@ export default function NewCategoryScreen() {
   const [name, setName] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(CATEGORY_ICONS[0]);
   const [selectedColor, setSelectedColor] = useState(CATEGORY_COLORS[0]);
-  const [type, setType] = useState<TransactionType>("expense");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -63,7 +61,7 @@ export default function NewCategoryScreen() {
         name: name.trim(),
         icon: selectedIcon,
         color: selectedColor,
-        type,
+        type: "expense",
       });
       Alert.alert("Success", "Category created successfully");
       router.back();
@@ -93,72 +91,11 @@ export default function NewCategoryScreen() {
         <Card style={styles.section}>
           <Input
             label="Category Name"
-            placeholder="e.g., Groceries, Salary"
+            placeholder="e.g., Groceries, Shopping"
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
           />
-
-          <Text
-            style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
-          >
-            Type
-          </Text>
-          <View style={styles.typeContainer}>
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === "expense" && styles.typeButtonActive,
-                { borderColor: isDark ? "#4B5563" : "#D1D5DB" },
-              ]}
-              onPress={() => setType("expense")}
-            >
-              <Text
-                style={[
-                  styles.typeIcon,
-                  type === "expense" && styles.typeIconActive,
-                ]}
-              >
-                💸
-              </Text>
-              <Text
-                style={[
-                  styles.typeText,
-                  { color: isDark ? "#E5E7EB" : "#374151" },
-                  type === "expense" && styles.typeTextActive,
-                ]}
-              >
-                Expense
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.typeButton,
-                type === "income" && styles.typeButtonActive,
-                { borderColor: isDark ? "#4B5563" : "#D1D5DB" },
-              ]}
-              onPress={() => setType("income")}
-            >
-              <Text
-                style={[
-                  styles.typeIcon,
-                  type === "income" && styles.typeIconActive,
-                ]}
-              >
-                💰
-              </Text>
-              <Text
-                style={[
-                  styles.typeText,
-                  { color: isDark ? "#E5E7EB" : "#374151" },
-                  type === "income" && styles.typeTextActive,
-                ]}
-              >
-                Income
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           <Text
             style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}

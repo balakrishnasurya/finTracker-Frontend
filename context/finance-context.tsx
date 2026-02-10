@@ -1,22 +1,23 @@
 import {
-    categoryService,
-    streakService,
-    transactionService,
+  categoryService,
+  streakService,
+  transactionService,
 } from "@/services/api";
 import { Category, FinanceSummary, Streak, Transaction } from "@/types";
 import {
-    loadCategories,
-    loadTransactions,
-    saveCategories,
-    saveTransactions,
+  loadCategories,
+  loadTransactions,
+  saveCategories,
+  saveTransactions,
 } from "@/utils/storage";
 import React, {
-    createContext,
-    ReactNode,
-    useContext,
-    useEffect,
-    useState,
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
 } from "react";
+import { Alert, Vibration } from "react-native";
 
 interface FinanceContextType {
   categories: Category[];
@@ -50,6 +51,107 @@ export const useFinance = () => {
   return context;
 };
 
+// Encouraging messages for streak updates
+const STREAK_MESSAGES = [
+  {
+    min: 1,
+    max: 3,
+    messages: [
+      "🎉 Great start! You're building a healthy financial habit!",
+      "💪 Awesome! Keep tracking your finances daily!",
+      "🌟 You're on fire! Keep up the momentum!",
+    ],
+  },
+  {
+    min: 4,
+    max: 7,
+    messages: [
+      "🔥 One week closer to financial mastery!",
+      "🚀 Amazing dedication! Your consistency is paying off!",
+      "⭐ You're unstoppable! Keep this streak alive!",
+    ],
+  },
+  {
+    min: 8,
+    max: 14,
+    messages: [
+      "🏆 Incredible! You're a finance tracking champion!",
+      "💎 Two weeks strong! Your financial discipline is impressive!",
+      "🎯 You're crushing it! Every day counts!",
+    ],
+  },
+  {
+    min: 15,
+    max: 30,
+    messages: [
+      "👑 Phenomenal! You're a financial wellness superstar!",
+      "🌈 A full month incoming! Your future self will thank you!",
+      "🎊 Outstanding commitment! You're setting an amazing example!",
+    ],
+  },
+  {
+    min: 31,
+    max: 999,
+    messages: [
+      "🏅 Legendary! Your dedication to financial health is remarkable!",
+      "💫 Elite status! You've mastered the art of consistency!",
+      "🌟 Unbelievable! You're an inspiration to others!",
+    ],
+  },
+];
+
+const getEncouragingMessage = (streakCount: number): string => {
+  const messageGroup = STREAK_MESSAGES.find(
+    (group) => streakCount >= group.min && streakCount <= group.max,
+  );
+  if (messageGroup) {
+    const randomIndex = Math.floor(
+      Math.random() * messageGroup.messages.length,
+    );
+    return messageGroup.messages[randomIndex];
+  }
+  return "🎉 Keep going! You're doing amazing!";
+};
+
+const showStreakFeedback = (
+  currentStreak: number,
+  isNewRecord: boolean,
+  wasStreakBroken: boolean,
+) => {
+  // Haptic feedback
+  Vibration.vibrate([0, 50, 100, 50]);
+
+  if (wasStreakBroken) {
+    Alert.alert(
+      "💪 Fresh Start!",
+      "Don't worry about the break! Every streak starts with day 1. You're back on track now! 🚀",
+      [{ text: "Let's Go!", style: "default" }],
+    );
+    return;
+  }
+
+  const message = getEncouragingMessage(currentStreak);
+  const title = isNewRecord
+    ? `🎊 New Record: ${currentStreak} Days! 🎊`
+    : `🔥 ${currentStreak} Day Streak! 🔥`;
+
+  const additionalMessage = isNewRecord
+    ? "\n\n🏆 You've beaten your personal best! Keep going!"
+    : "";
+
+  Alert.alert(
+    title,
+    message + additionalMessage,
+    [
+      {
+        text: "Keep Going! 💪",
+        style: "default",
+      },
+    ],
+    { cancelable: true },
+  );
+};
+
 export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -67,9 +169,41 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
 
   const initializeStreak = async () => {
     try {
+      // Get current streak before update
+      const oldStreak = await streakService.getStreak().catch(() => null);
+
       // Update streak on app open
       const streakData = await streakService.updateStreak();
       setStreak(streakData);
+
+      // Show feedback if streak increased or is new record
+      if (oldStreak) {
+        const streakIncreased =
+          streakData.currentCount > oldStreak.currentCount;
+        const isNewRecord = streakData.currentCount > streakData.longestCount;
+        const wasStreakBroken =
+          oldStreak.currentCount > 1 && streakData.currentCount === 1;
+
+        if (streakIncreased || wasStreakBroken) {
+          // Delay feedback slightly to ensure UI is ready
+          setTimeout(() => {
+            showStreakFeedback(
+              streakData.currentCount,
+              isNewRecord,
+              wasStreakBroken,
+            );
+          }, 500);
+        }
+      } else if (streakData.currentCount === 1) {
+        // First time user - welcome message
+        setTimeout(() => {
+          Alert.alert(
+            "🎉 Welcome to FinTrackor!",
+            "You've started your financial tracking journey! Open the app daily to build your streak and develop healthy money habits. 💰",
+            [{ text: "Let's Go!", style: "default" }],
+          );
+        }, 500);
+      }
     } catch (err) {
       console.error("Error initializing streak:", err);
       // Try to fetch current streak if update fails
@@ -84,8 +218,15 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
 
   const updateStreak = async () => {
     try {
+      const oldStreak = streak;
       const streakData = await streakService.updateStreak();
       setStreak(streakData);
+
+      // Show feedback if streak increased
+      if (oldStreak && streakData.currentCount > oldStreak.currentCount) {
+        const isNewRecord = streakData.currentCount > streakData.longestCount;
+        showStreakFeedback(streakData.currentCount, isNewRecord, false);
+      }
     } catch (err) {
       console.error("Error updating streak:", err);
       throw err;
@@ -325,18 +466,14 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
 
   // Calculate finance summary
   const getFinanceSummary = (): FinanceSummary => {
-    const totalIncome = transactions
-      .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
-
     const totalExpense = transactions
       .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
 
     return {
-      totalIncome,
+      totalIncome: 0,
       totalExpense,
-      balance: totalIncome - totalExpense,
+      balance: 0,
       transactionCount: transactions.length,
     };
   };

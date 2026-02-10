@@ -3,12 +3,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Category } from "@/types";
 import { router } from "expo-router";
 import React from "react";
-import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface CategoryGridProps {
   categories: Category[];

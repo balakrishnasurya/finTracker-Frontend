@@ -171,7 +171,7 @@ hooks/
 ```bash
 # Test category endpoint
 curl -X 'GET' \
-  'https://plankton-app-v4el9.ondigitalocean.app/api/v1/categories' \
+  'https://seal-app-wqxuo.ondigitalocean.app/api/v1/categories' \
   -H 'accept: */*'
 ```
 

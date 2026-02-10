@@ -168,7 +168,7 @@ await transactionService.deleteTransaction("456");
 
 ```typescript
 export const API_CONFIG = {
-  BASE_URL: "https://plankton-app-v4el9.ondigitalocean.app/api/v1",
+  BASE_URL: "https://seal-app-wqxuo.ondigitalocean.app/api/v1",
   TIMEOUT: 10000, // 10 seconds
   HEADERS: {
     "Content-Type": "application/json",

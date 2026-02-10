@@ -60,7 +60,7 @@ Action: Turn off WiFi/data, app still displays data
 3. Test endpoint manually:
 
 ```bash
-curl https://plankton-app-v4el9.ondigitalocean.app/api/v1/categories
+curl https://seal-app-wqxuo.ondigitalocean.app/api/v1/categories
 ```
 
 ### API not connecting?

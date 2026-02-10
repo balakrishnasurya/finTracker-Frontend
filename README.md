@@ -120,11 +120,10 @@ The app integrates with a backend API for data persistence:
 
 ### Testing API
 
-```bash
-curl -X 'GET' \
-  'https://plankton-app-v4el9.ondigitalocean.app/api/v1/categories' \
-  -H 'accept: */*'
-```
+````bash
+curl -X GET \
+  'https://seal-app-wqxuo.ondigitalocean.app/api/v1/categories' \
+  -H 'Content-Type: application/json'
 
 For detailed API integration documentation, see [API_INTEGRATION.md](./docs/API_INTEGRATION.md)
 
@@ -155,7 +154,7 @@ npm run android    # Run on Android
 npm run ios        # Run on iOS
 npm run web        # Run on web
 npm run lint       # Run ESLint
-```
+````
 
 ### Adding New Features
 
