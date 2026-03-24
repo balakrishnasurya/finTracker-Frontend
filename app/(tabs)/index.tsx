@@ -8,11 +8,11 @@ import { useSpendingAlert } from "@/hooks/use-spending-alert";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 export default function HomeScreen() {
@@ -62,7 +62,7 @@ export default function HomeScreen() {
 
     const monthExpenses = transactions
       .filter((t) => {
-        ///if (t.type !== "expense") return false;
+        if (t.transactionDirection !== "DEBIT") return false;
 
         try {
           // Parse the transaction date
@@ -106,6 +106,7 @@ export default function HomeScreen() {
     const lastMonthExpenses = transactions
       .filter((t) => {
         try {
+          if (t.transactionDirection !== "DEBIT") return false;
           const transactionDate = new Date(t.date);
           if (isNaN(transactionDate.getTime())) return false;
 
@@ -172,7 +173,7 @@ export default function HomeScreen() {
                     { color: isDark ? "#F9FAFB" : "#111827" },
                   ]}
                 >
-                  FinTrackor
+                  FinTracker
                 </Text>
               </View>
               <Text

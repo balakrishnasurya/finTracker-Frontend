@@ -49,7 +49,9 @@ export interface TransactionApiResponse {
   categoryId: string | number;
   merchant: string;
   txnDate: string;
+  paymentType?: string;
   transactionType?: string;
+  transactionDirection?: "DEBIT" | "CREDIT";
   smsId?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -60,7 +62,9 @@ export interface CreateTransactionDto {
   txnDate: string;
   amount: number;
   merchant: string;
+  paymentType: string;
   transactionType: string;
+  transactionDirection: "DEBIT" | "CREDIT";
   categoryId: number;
 }
 
@@ -69,7 +73,9 @@ export interface UpdateTransactionDto {
   categoryId?: number;
   merchant?: string;
   txnDate?: string;
+  paymentType?: string;
   transactionType?: string;
+  transactionDirection?: "DEBIT" | "CREDIT";
 }
 
 // Streak API types

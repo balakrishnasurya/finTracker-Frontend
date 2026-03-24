@@ -15,4 +15,5 @@ export const API_CONFIG = {
 export const API_ENDPOINTS = {
   CATEGORIES: "/categories",
   TRANSACTIONS: "/transactions",
+  IMPORT_CSV: "/import/transactions/csv",
 } as const;

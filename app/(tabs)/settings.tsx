@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useSpendingAlert } from "@/hooks/use-spending-alert";
+import { transactionService } from "@/services/api/transaction.service";
 import {
   AlertSettings,
   isValidEmail,
@@ -10,6 +11,7 @@ import {
   saveAlertSettings,
 } from "@/utils/spending-alert";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -35,6 +37,8 @@ export default function SettingsScreen() {
     amount: "",
     email: "",
   });
+  // Data Import state
+  const [isImporting, setIsImporting] = useState(false);
 
   // Load alert settings on mount
   useEffect(() => {
@@ -127,6 +131,40 @@ export default function SettingsScreen() {
       Alert.alert("Error", "Failed to reset alert. Please try again.", [
         { text: "OK" },
       ]);
+    }
+  };
+
+  const handleImportCSV = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "text/csv",
+          "application/vnd.ms-excel",
+          "text/comma-separated-values",
+        ],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      setIsImporting(true);
+      const output = await transactionService.importTransactionsCSV(
+        result.assets[0],
+      );
+
+      Alert.alert(
+        "Success",
+        (output as any)?.message ||
+          "Transactions imported successfully! Your dashboard will update shortly.",
+      );
+    } catch (error) {
+      console.error(error);
+      Alert.alert(
+        "Error",
+        "Failed to import CSV. Please ensure the file format is correct.",
+      );
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -301,6 +339,46 @@ export default function SettingsScreen() {
             ]}
           />
         )}
+
+        {/* Data Management Section */}
+        <Card style={[styles.alertCard, { marginTop: 24 }]}>
+          <View style={styles.alertHeader}>
+            <Text style={styles.alertEmoji}>📂</Text>
+            <View style={styles.alertHeaderText}>
+              <Text
+                style={[
+                  styles.alertTitle,
+                  { color: isDark ? "#F9FAFB" : "#111827" },
+                ]}
+              >
+                Data Management
+              </Text>
+              <Text
+                style={[
+                  styles.alertDescription,
+                  { color: isDark ? "#9CA3AF" : "#6B7280" },
+                ]}
+              >
+                Import transactions from CSV files
+              </Text>
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.divider,
+              { backgroundColor: isDark ? "#374151" : "#E5E7EB" },
+            ]}
+          />
+
+          <Button
+            title="Import Transactions via CSV"
+            onPress={handleImportCSV}
+            variant="secondary"
+            loading={isImporting}
+            size="large"
+          />
+        </Card>
 
         <View style={{ height: 40 }} />
       </ScrollView>

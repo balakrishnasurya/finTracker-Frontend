@@ -1,4 +1,5 @@
 export type TransactionType = "income" | "expense";
+export type TransactionDirection = "DEBIT" | "CREDIT";
 
 export interface Category {
   id: string;
@@ -15,8 +16,9 @@ export interface Transaction {
   categoryId: string;
   description: string;
   date: string;
-  type: TransactionType;
   paymentType?: string;
+  transactionType?: string;
+  transactionDirection: TransactionDirection;
   createdAt: string;
 }
 

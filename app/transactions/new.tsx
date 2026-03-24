@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { TransactionDirection } from "@/types";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -24,14 +25,18 @@ export default function NewTransactionScreen() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [transactionDirection, setTransactionDirection] =
+    useState<TransactionDirection>("DEBIT");
   const [paymentType, setPaymentType] = useState("Upi");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successAnimation] = useState(new Animated.Value(0));
 
-  // Filter only expense categories
-  const availableCategories = categories.filter((c) => c.type === "expense");
+  const transactionLabel =
+    transactionDirection === "CREDIT" ? "income" : "expense";
+
+  const availableCategories = categories;
 
   const handleSubmit = async () => {
     if (!amount || parseFloat(amount) <= 0) {
@@ -54,9 +59,9 @@ export default function NewTransactionScreen() {
         description:
           description.trim() || selectedCategory?.name || "Transaction",
         categoryId: selectedCategoryId,
-        type: "expense",
         date,
         paymentType,
+        transactionDirection,
       });
 
       // Show success modal with animation
@@ -98,6 +103,51 @@ export default function NewTransactionScreen() {
         </View>
 
         <Card style={styles.section}>
+          <Text
+            style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
+          >
+            Transaction Type
+          </Text>
+          <View style={styles.typeContainer}>
+            {[
+              { label: "Debit", value: "DEBIT", icon: "🔻" },
+              { label: "Credit", value: "CREDIT", icon: "🔺" },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.typeButton,
+                  transactionDirection === option.value &&
+                    styles.typeButtonActive,
+                  { backgroundColor: isDark ? "#374151" : "#F9FAFB" },
+                ]}
+                onPress={() =>
+                  setTransactionDirection(option.value as TransactionDirection)
+                }
+              >
+                <Text
+                  style={[
+                    styles.typeIcon,
+                    transactionDirection === option.value &&
+                      styles.typeIconActive,
+                  ]}
+                >
+                  {option.icon}
+                </Text>
+                <Text
+                  style={[
+                    styles.typeText,
+                    { color: isDark ? "#E5E7EB" : "#374151" },
+                    transactionDirection === option.value &&
+                      styles.typeTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text
             style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
           >
@@ -175,7 +225,7 @@ export default function NewTransactionScreen() {
                   { color: isDark ? "#9CA3AF" : "#6B7280" },
                 ]}
               >
-                No expense categories available
+                No categories available
               </Text>
               <Button
                 title="Create Category"
@@ -295,7 +345,8 @@ export default function NewTransactionScreen() {
                 { color: isDark ? "#9CA3AF" : "#6B7280" },
               ]}
             >
-              Your expense of ₹{amount} has been recorded successfully
+              Your {transactionLabel} of ₹{amount} has been recorded
+              successfully
             </Text>
           </Animated.View>
         </View>

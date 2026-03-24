@@ -28,6 +28,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
     day: "numeric",
     year: "numeric",
   });
+  const isCredit = transaction.transactionDirection === "CREDIT";
 
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
@@ -66,11 +67,12 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
             style={[
               styles.amount,
               {
-                color: "#EF4444",
+                color: isCredit ? "#10B981" : "#EF4444",
               },
             ]}
           >
-            -{formattedAmount}
+            {isCredit ? "+" : "-"}
+            {formattedAmount}
           </Text>
         </View>
       </Card>

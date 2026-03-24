@@ -34,12 +34,19 @@ export class HttpClient {
     try {
       logger.debug(`API Request: ${options.method || "GET"} ${url}`);
 
+      const headers: Record<string, string> = {
+        ...this.defaultHeaders,
+        ...options.headers,
+      };
+
+      // If body is FormData, let the browser set the Content-Type header with the boundary
+      if (options.body instanceof FormData) {
+        delete headers["Content-Type"];
+      }
+
       const response = await fetch(url, {
         ...options,
-        headers: {
-          ...this.defaultHeaders,
-          ...options.headers,
-        },
+        headers,
         signal: controller.signal,
       });
 
@@ -116,23 +123,26 @@ export class HttpClient {
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       method: "POST",
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       method: "PUT",
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<T> {
+    const isFormData = data instanceof FormData;
     return this.request<T>(endpoint, {
       method: "PATCH",
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
   }
 

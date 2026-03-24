@@ -5,12 +5,7 @@ import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
 import React from "react";
-import {
-  FlatList,
-  StyleSheet,
-  Text,
-  View
-} from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 export default function TransactionsScreen() {
   const { transactions, categories } = useFinance();
@@ -26,7 +21,7 @@ export default function TransactionsScreen() {
   };
 
   const totalExpense = transactions
-    .filter((t) => t.type === "expense")
+    .filter((t) => t.transactionDirection === "DEBIT")
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (

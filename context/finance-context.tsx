@@ -1,21 +1,21 @@
 import {
-  categoryService,
-  streakService,
-  transactionService,
+    categoryService,
+    streakService,
+    transactionService,
 } from "@/services/api";
 import { Category, FinanceSummary, Streak, Transaction } from "@/types";
 import {
-  loadCategories,
-  loadTransactions,
-  saveCategories,
-  saveTransactions,
+    loadCategories,
+    loadTransactions,
+    saveCategories,
+    saveTransactions,
 } from "@/utils/storage";
 import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    ReactNode,
+    useContext,
+    useEffect,
+    useState,
 } from "react";
 import { Alert, Vibration } from "react-native";
 
@@ -389,8 +389,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
         transactionData.description,
         transactionData.categoryId,
         transactionData.date,
-        transactionData.type,
         transactionData.paymentType || "Upi",
+        transactionData.transactionDirection || "DEBIT",
       );
 
       const updatedTransactions = [...transactions, newTransaction];
@@ -419,10 +419,14 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
       // Try to update on backend
       await transactionService.updateTransaction(id, {
         amount: transactionData.amount,
-        categoryId: transactionData.categoryId,
-        description: transactionData.description,
-        date: transactionData.date,
-        type: transactionData.type,
+        categoryId: transactionData.categoryId
+          ? parseInt(transactionData.categoryId, 10)
+          : undefined,
+        merchant: transactionData.description,
+        txnDate: transactionData.date,
+        paymentType: transactionData.paymentType,
+        transactionType: transactionData.paymentType,
+        transactionDirection: transactionData.transactionDirection,
       });
 
       const updatedTransactions = transactions.map((trans) =>
@@ -467,13 +471,17 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({
   // Calculate finance summary
   const getFinanceSummary = (): FinanceSummary => {
     const totalExpense = transactions
-      .filter((t) => t.type === "expense")
+      .filter((t) => t.transactionDirection === "DEBIT")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalIncome = transactions
+      .filter((t) => t.transactionDirection === "CREDIT")
       .reduce((sum, t) => sum + t.amount, 0);
 
     return {
-      totalIncome: 0,
+      totalIncome,
       totalExpense,
-      balance: 0,
+      balance: totalIncome - totalExpense,
       transactionCount: transactions.length,
     };
   };

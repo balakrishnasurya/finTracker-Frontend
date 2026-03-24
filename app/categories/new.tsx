@@ -3,15 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useFinance } from "@/context/finance-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 const CATEGORY_ICONS = [
@@ -43,8 +43,14 @@ export default function NewCategoryScreen() {
   const { addCategory } = useFinance();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { type } = useLocalSearchParams<{ type?: string }>();
+  const initialType =
+    type === "income" || type === "expense" ? type : "expense";
 
   const [name, setName] = useState("");
+  const [categoryType, setCategoryType] = useState<"income" | "expense">(
+    initialType,
+  );
   const [selectedIcon, setSelectedIcon] = useState(CATEGORY_ICONS[0]);
   const [selectedColor, setSelectedColor] = useState(CATEGORY_COLORS[0]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +67,7 @@ export default function NewCategoryScreen() {
         name: name.trim(),
         icon: selectedIcon,
         color: selectedColor,
-        type: "expense",
+        type: categoryType,
       });
       Alert.alert("Success", "Category created successfully");
       router.back();
@@ -89,6 +95,48 @@ export default function NewCategoryScreen() {
         </View>
 
         <Card style={styles.section}>
+          <Text
+            style={[styles.label, { color: isDark ? "#E5E7EB" : "#374151" }]}
+          >
+            Category Type
+          </Text>
+          <View style={styles.typeContainer}>
+            {[
+              { label: "Expense", value: "expense", icon: "🔻" },
+              { label: "Income", value: "income", icon: "🔺" },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.typeButton,
+                  categoryType === option.value && styles.typeButtonActive,
+                  { backgroundColor: isDark ? "#374151" : "#F9FAFB" },
+                ]}
+                onPress={() =>
+                  setCategoryType(option.value as "income" | "expense")
+                }
+              >
+                <Text
+                  style={[
+                    styles.typeIcon,
+                    categoryType === option.value && styles.typeIconActive,
+                  ]}
+                >
+                  {option.icon}
+                </Text>
+                <Text
+                  style={[
+                    styles.typeText,
+                    { color: isDark ? "#E5E7EB" : "#374151" },
+                    categoryType === option.value && styles.typeTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Input
             label="Category Name"
             placeholder="e.g., Groceries, Shopping"
