@@ -84,14 +84,16 @@ export const markAlertAsSent = async (): Promise<void> => {
 export const sendAlertEmail = async (
   amount: number,
   email: string,
+  currentTotalAmount: number,
 ): Promise<boolean> => {
   console.log("📤 [API] Sending alert email...");
   console.log(`   Amount: ₹${amount}`);
   console.log(`   Email: ${email}`);
+  console.log(`   Current Total Amount: ₹${currentTotalAmount}`);
 
   try {
     const url = "https://seal-app-wqxuo.ondigitalocean.app/send-alert";
-    const body = JSON.stringify({ amount, email });
+    const body = JSON.stringify({ amount, email, currentTotalAmount });
 
     console.log(`   URL: ${url}`);
     console.log(`   Body: ${body}`);

@@ -1,11 +1,11 @@
 import { useFinance } from "@/context/finance-context";
 import { Transaction } from "@/types";
 import {
-    AlertSettings,
-    hasAlertBeenSentThisMonth,
-    loadAlertSettings,
-    markAlertAsSent,
-    sendAlertEmail,
+  AlertSettings,
+  hasAlertBeenSentThisMonth,
+  loadAlertSettings,
+  markAlertAsSent,
+  sendAlertEmail,
 } from "@/utils/spending-alert";
 import { useEffect, useState } from "react";
 
@@ -129,7 +129,11 @@ export const useSpendingAlert = () => {
     // Trigger alert
     console.log("  ✅ ALL CONDITIONS MET - Sending alert email...");
     try {
-      await sendAlertEmail(alertSettings.monthlyLimit, alertSettings.email);
+      await sendAlertEmail(
+        alertSettings.monthlyLimit,
+        alertSettings.email,
+        monthlyTotal,
+      );
       await markAlertAsSent();
       setIsAlertTriggered(true);
       console.log("📧 Monthly spending alert email sent successfully");
