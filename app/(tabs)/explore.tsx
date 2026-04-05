@@ -5,7 +5,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Fonts } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { chatService } from "@/services/api";
-import type { ChatMessageApiResponse } from "@/types/api.types";
+import type { ApiError, ChatMessageApiResponse } from "@/types/api.types";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,6 +21,20 @@ import {
 
 // Conversation ID for the chat
 const CONVERSATION_ID = 2;
+
+function getChatErrorMessage(error: unknown, fallback: string): string {
+  const apiError = error as ApiError;
+
+  if (apiError?.statusCode === 408) {
+    return "The assistant is taking too long to respond. Please try again in a moment.";
+  }
+
+  if (apiError?.statusCode === 0) {
+    return "No internet connection. Please check your network and try again.";
+  }
+
+  return fallback;
+}
 
 export default function ChatScreen() {
   const colorScheme = useColorScheme();
@@ -54,7 +68,10 @@ export default function ChatScreen() {
       console.error("Failed to load messages:", error);
       Alert.alert(
         "Error",
-        "Failed to load conversation history. Please try again.",
+        getChatErrorMessage(
+          error,
+          "Failed to load conversation history. Please try again.",
+        ),
       );
     } finally {
       setIsLoading(false);
@@ -79,7 +96,10 @@ export default function ChatScreen() {
       console.error("Failed to send message:", error);
       Alert.alert(
         "Error",
-        "Failed to send message. Please check your connection and try again.",
+        getChatErrorMessage(
+          error,
+          "Failed to send message. Please check your connection and try again.",
+        ),
       );
       // Restore the input text so user can retry
       setInputText(messageText);

@@ -27,74 +27,96 @@ export class HttpClient {
     options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-    const startTime = Date.now();
+    const maxAttempts = 1 + API_CONFIG.TIMEOUT_RETRY_ATTEMPTS;
 
-    try {
-      logger.debug(`API Request: ${options.method || "GET"} ${url}`);
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      const startTime = Date.now();
 
-      const headers: Record<string, string> = {
-        ...this.defaultHeaders,
-        ...options.headers,
-      };
+      try {
+        logger.debug(`API Request: ${options.method || "GET"} ${url}`);
 
-      // If body is FormData, let the browser set the Content-Type header with the boundary
-      if (options.body instanceof FormData) {
-        delete headers["Content-Type"];
-      }
+        const headers: Record<string, string> = {
+          ...this.defaultHeaders,
+          ...options.headers,
+        };
 
-      const response = await fetch(url, {
-        ...options,
-        headers,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      const duration = Date.now() - startTime;
-
-      logger.api(options.method || "GET", endpoint, response.status, duration);
-
-      // Handle non-2xx responses
-      if (!response.ok) {
-        const errorData = await this.parseErrorResponse(response);
-        throw this.createApiError(errorData, response.status);
-      }
-
-      // Handle empty responses
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        return {} as T;
-      }
-
-      return await response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-
-      if (error instanceof Error) {
-        if (error.name === "AbortError") {
-          logger.error("API Timeout:", endpoint);
-          throw this.createApiError("Request timeout", 408);
+        // If body is FormData, let the browser set the Content-Type header with the boundary
+        if (options.body instanceof FormData) {
+          delete headers["Content-Type"];
         }
 
-        // Network errors
-        if (!navigator.onLine) {
-          logger.error("No internet connection");
-          throw this.createApiError("No internet connection", 0);
+        const response = await fetch(url, {
+          ...options,
+          headers,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+        const duration = Date.now() - startTime;
+
+        logger.api(
+          options.method || "GET",
+          endpoint,
+          response.status,
+          duration,
+        );
+
+        // Handle non-2xx responses
+        if (!response.ok) {
+          const errorData = await this.parseErrorResponse(response);
+          throw this.createApiError(errorData, response.status);
         }
 
-        // Already an ApiError
-        if ("statusCode" in error) {
-          throw error;
+        // Handle empty responses
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          return {} as T;
         }
 
-        logger.error("API Error:", error.message);
-        throw this.createApiError(error.message);
+        return await response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+
+        if (error instanceof Error) {
+          if (error.name === "AbortError") {
+            if (attempt < maxAttempts) {
+              logger.warn(
+                `API Timeout (attempt ${attempt}/${maxAttempts - 1} retries):`,
+                endpoint,
+              );
+              continue;
+            }
+
+            logger.error("API Timeout:", endpoint);
+            throw this.createApiError(
+              "Request timeout. The server took too long to respond.",
+              408,
+            );
+          }
+
+          // Network errors
+          if (!navigator.onLine) {
+            logger.error("No internet connection");
+            throw this.createApiError("No internet connection", 0);
+          }
+
+          // Already an ApiError
+          if ("statusCode" in error) {
+            throw error;
+          }
+
+          logger.error("API Error:", error.message);
+          throw this.createApiError(error.message);
+        }
+
+        logger.error("Unknown API Error");
+        throw this.createApiError("Unknown error occurred");
       }
-
-      logger.error("Unknown API Error");
-      throw this.createApiError("Unknown error occurred");
     }
+
+    throw this.createApiError("Unknown error occurred");
   }
 
   private async parseErrorResponse(response: Response): Promise<string> {
