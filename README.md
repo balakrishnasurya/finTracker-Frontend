@@ -1,4 +1,4 @@
-# FinTrackor - Finance Tracking App 💰
+# FinTrack - Finance Tracking App 💰
 
 A modern, full-featured finance tracking app built with React Native and Expo, featuring real-time backend API integration.
 
